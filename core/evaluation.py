@@ -29,19 +29,19 @@ logging.getLogger("bioio").setLevel(logging.ERROR)
 def to_monai_tensor(matrix):
     return torch.tensor(matrix, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
 
-
-def extract_boundary(mask, min_boundary_width=1, dilation_ratio=0.02):
+def extract_boundary(mask, width=1):
     if not np.any(mask):
         return np.zeros_like(mask, dtype=bool)
-        
-    dims = mask.shape
-    diag = np.sqrt(sum(d**2 for d in dims))
-    d = max(int(round(dilation_ratio * diag)), min_boundary_width)
     
-    eroded = binary_erosion(mask, iterations=d)
-    boundary = mask.astype(bool) & ~eroded
+    mask_bool = mask.astype(bool)
+    boundary = np.zeros_like(mask_bool)
+    
+    for z in range(mask_bool.shape[0]):
+        if np.any(mask_bool[z]):
+            eroded = binary_erosion(mask_bool[z], iterations=width)
+            boundary[z] = mask_bool[z] ^ eroded
+            
     return boundary
-
 
 def boundary_iou(y_pred, y_true):
     bound_pred = extract_boundary(y_pred)
@@ -54,7 +54,6 @@ def boundary_iou(y_pred, y_true):
         return 1.0 if np.sum(bound_pred) == 0 and np.sum(bound_true) == 0 else 0.0
     return intersection / union
 
-
 def overall_contour_agreement(y_pred, y_true):
     bound_pred = extract_boundary(y_pred)
     bound_true = extract_boundary(y_true)
@@ -65,6 +64,7 @@ def overall_contour_agreement(y_pred, y_true):
     if sum_bounds == 0:
         return 1.0 if np.sum(bound_pred) == 0 and np.sum(bound_true) == 0 else 0.0
     return 2.0 * intersection / sum_bounds
+
 
 
 def hausdorff_computing(pr,n_annotators, predictions_list, m_gt):

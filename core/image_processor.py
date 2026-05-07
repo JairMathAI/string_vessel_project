@@ -78,35 +78,19 @@ def _execute_processing_logic(use_dim_fix, get_channels, src_path_str, out_path_
             sname_cleaned = sname.replace("/", "_")
             out_fn = out_path_3d / f"{fn.stem}_{sname_cleaned}.tiff"
 
-            # adding pixel info, normalize pps to a tuple (Z, Y, X)
-            pps = getattr(reader, "physical_pixel_sizes", None)
-            
-            if pps is None:
-                raw_voxel_sizes = (None, None, None)
-            elif isinstance(pps, tuple):
-                raw_voxel_sizes = pps  # tuple like (Z, Y, X)
-            else:
-                raw_voxel_sizes = (getattr(pps, "Z", None),
-                                   getattr(pps, "Y", None),
-                                   getattr(pps, "X", None))
-
-            # Clean up missing/incorrect data, populate
+            # # adding pixel info, normalize pps to a tuple (Z, Y, X)
+            pps = reader.physical_pixel_sizes
+            axes_names = ['Z', 'Y', 'X']
             corrected_sizes = []
-            axes_names = ["Z", "Y", "X"]
-            
-            for i, val in enumerate(raw_voxel_sizes):
+            for i, ax in enumerate(axes_names):
+                val = getattr(pps, ax, 1.0)
                 if val is None:
                     cleaned_val = 1.0
                 else:
-                    cleaned_val = float(val)
-                    if cleaned_val < 0:
-                        tqdm.write(f"  [Metadata Fix] Corrected negative pixel size for {axes_names[i]} in '{fn.name}' scene '{sname}': {cleaned_val} -> {abs(cleaned_val)}")
-                        cleaned_val = abs(cleaned_val)
+                    cleaned_val = abs(float(val))
                 corrected_sizes.append(cleaned_val)
-
-            # Create corrected PhysicalPixelSizes object
+            
             voxel_sizes = PhysicalPixelSizes(corrected_sizes[0], corrected_sizes[1], corrected_sizes[2])
-     
             OmeTiffWriter.save(
                 data=im,
                 uri=out_fn,
