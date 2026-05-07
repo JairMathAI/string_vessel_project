@@ -303,24 +303,29 @@ def analysis_menu():
                     fileID = fn.stem
                     
                     try:
-                        img_obj = BioImage(fn, reader=bioio_tifffile.Reader)
-                        pred = img_obj.get_image_data("ZYX", C=0, T=0)
-                    except:
                         img_obj = BioImage(fn)
                         pred = img_obj.get_image_data("ZYX", C=0, T=0)
+                    except:
+                        img_obj = BioImage(fn, reader=bioio_tifffile.Reader)
+                        pred = img_obj.get_image_data("ZYX", C=0, T=0)
+
                     
                     # Pixel Dims
                     current_pixel_dims = list(params["pixelDimensions"])
-                    if meta_pixel_dim_widget.value:
-                        pps = getattr(img_obj, "physical_pixel_sizes", None)
-                        if pps:
-                            z = getattr(pps, "Z", 1.0) or 1.0
-                            y = getattr(pps, "Y", 1.0) or 1.0
-                            x = getattr(pps, "X", 1.0) or 1.0
-                            current_pixel_dims = [float(z), float(y), float(x)]
-                    
+                    if meta_pixel_dim_widget.value:  
+                        pps = getattr(img_obj,"physical_pixel_sizes",None)
+                        if pps is not None:
+                            z = float(getattr(pps, "Z", 1.0))
+                            y = float(getattr(pps, "Y", 1.0))
+                            x = float(getattr(pps, "X", 1.0))
+                            current_pixel_dims = [z, y, x]
+                        else:
+                            current_pixel_dims = [1.0, 1.0, 1.0]    
+
+
                     current_params = params.copy()
                     current_params["pixelDimensions"] = current_pixel_dims
+
 
                     # Masks
                     string_vessel = (pred == 2)

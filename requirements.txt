@@ -4,7 +4,7 @@ ipywidgets
 ipyfilechooser
 cripser
 simpleitk
-gudhi==3.7.0
+gudhi==3.11.0
 persim==0.3.8
 trimesh
 skan
