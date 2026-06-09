@@ -196,7 +196,7 @@ def process_vessel_type(vessel_mask, params, fileID, output_root, label_type):
         return None, None, None
 
     skl = skeletonize(vessel_mask, method="lee").astype(np.uint8)
-    skl = remove_small_objects(skl.astype(bool), max_size=4).astype(np.uint8)
+    skl = remove_small_objects(skl.astype(bool), max_size=4, connectivity=3).astype(np.uint8)
     skl[skl > 0] = 1
 
     if np.count_nonzero(skl) == 0:
